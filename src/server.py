@@ -7,7 +7,7 @@ class GameState:
         self.players = []
         self.lock = threading.Lock()
 
-    def register_players(self, player_id):
+    def register_player(self, player_id):
         with self.lock:
             if player_id not in self.players:
                 self.players.append(player_id)
@@ -17,7 +17,7 @@ class GameState:
 
 game = GameState()
 
-server = SimpleXMLRPCServer(("0.0.0.0", 8000), allow_none=True)
+server = SimpleXMLRPCServer(("192.168.12.157", 8000), allow_none=True)
 server.register_instance(game)
 print("Server running on port 8000...")
 server.serve_forever()
