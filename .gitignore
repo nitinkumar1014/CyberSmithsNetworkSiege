@@ -1,0 +1,23 @@
+# Python virtual environment
+.venv/
+.env/
+
+# PyCharm project files
+.idea/
+
+# Python compiled files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Logs and temporary files
+*.log
+*.tmp
+
+# Windows
+Thumbs.db
+desktop.ini
+
+# macOS (in case you share with others)
+.DS_Store
