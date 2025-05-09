@@ -1,0 +1,1 @@
+chmod +x game/bin/help.sh
