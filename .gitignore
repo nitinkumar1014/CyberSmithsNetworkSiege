@@ -21,3 +21,6 @@ desktop.ini
 
 # macOS (in case you share with others)
 .DS_Store
+
+# Non-tracked game files
+allowed_commands.txt
