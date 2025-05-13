@@ -18,13 +18,13 @@ class GameState:
         self.room_key = room_key
         self.players = {}  # {player_id: name}
         self.roles = {}  # {player_id: role}
-        self.alive = set()  # Set of alive players IDs
+        self.alive = set()  # Set of alive player IDs
         self.phase = "setup"
         self.lock = threading.Lock()
         self.MAX_PLAYERS = 3
         self.instructions = """
         Welcome to CyberSmith's Network Siege!
-        - Hacker: Attack other players to disrupt their system.
+        - Hacker: Attack other players to disrupt their systems.
         - Firewall: Block attacks to protect a player each night.
         - Auditor: Investigate players to deduce their roles.
         - Game alternates between night (secret actions) and day (voting to ban).
@@ -32,7 +32,8 @@ class GameState:
         """
         self.log_file = "/game/logs/activity.log"
         os.makedirs(os.path.dirname(self.log_file), exist_ok=True)
-        logging.basicConfig(filename=self.log_file, level=logging.INFO, format='%(asctime)s - %(message)s')
+        logging.basicConfig(filename=self.log_file, level=logging.INFO,
+                            format='%(asctime)s - %(message)s')
         logging.info(f"Room {self.room_key} initialized")
 
     def join_room(self, player_id, player_name):
@@ -43,16 +44,18 @@ class GameState:
                 return "Room is full."
             if player_id in self.players:
                 return f"Player ID {player_id} already in use."
+            if player_name in self.players.values():
+                return f"Player name {player_name} already in use."
             self.players[player_id] = player_name
             self.alive.add(player_id)
             logging.info(f"{player_id}:{player_name} joined room {self.room_key}")
-            if len(self.players) >= self.MAX_PLAYERS:
+            if len(self.players) == self.MAX_PLAYERS:
                 self.phase = "night"
                 self.assign_roles()
                 logging.info(f"Room {self.room_key} filled, starting night phase")
-                return f"Joined room {self.room_key} as {player_name}. Game Starting.\n{self.instructions}"
-            return (f"Joined room {self.room_key} as {player_name}. Waiting for {self.MAX_PLAYERS - len(self.players)}"
-                    f" more players.")
+                return f"Joined room {self.room_key} as {player_name}. Game starting!\n{self.instructions}"
+            return (f"Joined room {self.room_key} as {player_name}. Waiting for {self.MAX_PLAYERS - len(self.players)} "
+                    f"more players.")
 
     def assign_roles(self):
         roles = [Role.HACKER, Role.FIREWALL, Role.AUDITOR]
@@ -63,22 +66,26 @@ class GameState:
 
     def get_game_state(self, player_id):
         with self.lock:
+            logging.info(f"Fetching game state for player_id: {player_id}, room_key: {self.room_key}")
             if player_id not in self.players:
+                logging.error(f"Player {player_id} not in players: {self.players}")
                 return None
             role = self.roles.get(player_id, None)
             is_hacker = role == Role.HACKER
             hacker_ids = [pid for pid, r in self.roles.items() if
                           r == Role.HACKER and pid in self.alive] if is_hacker else []
-            return {
+            state = {
                 "room_key": self.room_key,
                 "phase": self.phase,
                 "role": role.value if role else "Not assigned",
                 "name": self.players.get(player_id, "Unknown"),
                 "alive": list(self.alive),
                 "player_count": len(self.players),
-                "hacker_count": hacker_ids,
+                "hacker_ids": hacker_ids,
                 "instructions": self.instructions if self.phase != "setup" else ""
             }
+            logging.info(f"Game state returned: {state}")
+            return state
 
 
 def generate_room_key():
@@ -87,15 +94,20 @@ def generate_room_key():
     return ''.join(random.choice(chars) for _ in range(length))
 
 
-rooms = {}
+# Global room registry
+rooms = {}  # {room_key: GameState}
 
 
-def create_room():
+def create_room(player_id, player_name):
     room_key = os.getenv("ROOM_KEY", generate_room_key())
     if room_key in rooms:
         return "Room key already exists.", 8000
     game = GameState(room_key)
+    # Register the creator as a player
+    game.players[player_id] = player_name
+    game.alive.add(player_id)
     rooms[room_key] = game
+    logging.info(f"Room {room_key} created with creator {player_id}:{player_name}")
     return room_key, 8000
 
 
@@ -103,6 +115,8 @@ def join_room(room_key, player_id, player_name):
     if room_key not in rooms:
         return "Room does not exist."
     return rooms[room_key].join_room(player_id, player_name)
+
+    # Start server
 
 
 server = SimpleXMLRPCServer(("0.0.0.0", 8000), allow_none=True)

@@ -8,7 +8,7 @@
 <body>
     <div class="container mt-5">
         <h1>Create a Room</h1>
-        {% with messages = get_flashed_message() %}
+        {% with messages = get_flashed_messages() %}
             {% if messages %}
                 <div class="alert alert-info">
                     {{ messages[-1] }}
