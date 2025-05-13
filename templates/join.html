@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Join Room</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>Join a Room</h1>
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="alert alert-info">
+                    {{ messages[-1] }}
+                </div>
+            {% endif %}
+        {% endwith %}
+        <form method="POST">
+            <div class="mb-3">
+                <label for="room_key" class="form-label">Room Key</label>
+                <input type="text" class="form-control" id="room_key" name="room_key" required>
+            </div>
+            <div class="mb-3">
+                <label for="player_name" class="form-label">Player Name (unique, a-z, A-Z, 0-9, _, max 20 characters)</label>
+                <input type="text" class="form-control" id="player_name" name="player_name" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Join Room</button>
+        </form>
+        <a href="{{ url_for('home') }}" class="btn btn-link">Back</a>
+    </div>
+</body>
+</html>

@@ -2,6 +2,8 @@ from xmlrpc.server import SimpleXMLRPCServer
 import threading
 import random
 import string
+import os
+import logging
 from enum import Enum
 
 
@@ -21,13 +23,17 @@ class GameState:
         self.lock = threading.Lock()
         self.MAX_PLAYERS = 3
         self.instructions = """
-        Welcome to CyberSmith's Network Sige!
+        Welcome to CyberSmith's Network Siege!
         - Hacker: Attack other players to disrupt their system.
         - Firewall: Block attacks to protect a player each night.
         - Auditor: Investigate players to deduce their roles.
         - Game alternates between night (secret actions) and day (voting to ban).
         - Use restricted terminal commands (e.g., curl, who) to act (coming soon).
         """
+        self.log_file = "/game/logs/activity.log"
+        os.makedirs(os.path.dirname(self.log_file), exist_ok=True)
+        logging.basicConfig(filename=self.log_file, level=logging.INFO, format='%(asctime)s - %(message)s')
+        logging.info(f"Room {self.room_key} initialized")
 
     def join_room(self, player_id, player_name):
         with self.lock:
@@ -39,9 +45,11 @@ class GameState:
                 return f"Player ID {player_id} already in use."
             self.players[player_id] = player_name
             self.alive.add(player_id)
+            logging.info(f"{player_id}:{player_name} joined room {self.room_key}")
             if len(self.players) >= self.MAX_PLAYERS:
-                self.phase = "setup"
+                self.phase = "night"
                 self.assign_roles()
+                logging.info(f"Room {self.room_key} filled, starting night phase")
                 return f"Joined room {self.room_key} as {player_name}. Game Starting.\n{self.instructions}"
             return (f"Joined room {self.room_key} as {player_name}. Waiting for {self.MAX_PLAYERS - len(self.players)}"
                     f" more players.")
@@ -51,6 +59,7 @@ class GameState:
         random.shuffle(roles)
         for player_id, role in zip(self.players.keys(), roles):
             self.roles[player_id] = role
+        logging.info(f"Roles assigned: {', '.join(f'{pid}:{r.value}' for pid, r in self.roles.items())}")
 
     def get_game_state(self, player_id):
         with self.lock:
@@ -82,9 +91,9 @@ rooms = {}
 
 
 def create_room():
-    room_key = generate_room_key()
-    while room_key in rooms:
-        room_key = generate_room_key()
+    room_key = os.getenv("ROOM_KEY", generate_room_key())
+    if room_key in rooms:
+        return "Room key already exists.", 8000
     game = GameState(room_key)
     rooms[room_key] = game
     return room_key, 8000

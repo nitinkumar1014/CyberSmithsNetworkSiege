@@ -8,12 +8,12 @@ def main():
     print("2. Join a Room - Type JOIN")
     choice = input("Enter your choice: ").strip().upper()
 
-    server = xmlrpc.client.ServerProxy("http://localhost:8000/")
+    server = xmlrpc.client.ServerProxy("http://52.91.8.84:8000/")
     player_id = input("Enter your player ID: ").strip()
 
     try:
         if choice == "CREATE":
-            room_key, port = server.createRoom()
+            room_key, port = server.create_room()
             print(f"Room created! Room key: {room_key}, Port: {port}")
             player_name = input("Enter your player name: ").strip()
             response = server.join_room(room_key, player_id, player_name)
@@ -48,7 +48,7 @@ def main():
                 print("Game started! Use restricted terminal for commands (to be implemented).")
                 break
             print("Waiting for more players...")
-            time.sleep(2)
+            time.sleep(5)
 
     except xmlrpc.client.Fault as e:
         print(f"Server error: {e}")
