@@ -8,16 +8,13 @@ import string
 import logging
 
 app = Flask(__name__, template_folder='./templates')
-app.secret_key = "supersecretkey"  # For flash messages and sessions
+app.secret_key = "supersecretkey"
 
-# Configure logging
 logging.basicConfig(filename='/var/log/master.log', level=logging.INFO,
                     format='%(asctime)s - %(message)s')
 
-# Docker client
 docker_client = docker.from_env()
 
-# Port registry (room_key -> port, container_id)
 port_registry = {}
 
 
@@ -78,9 +75,7 @@ def create_room():
                 volumes={'/game/logs': {'bind': '/game/logs', 'mode': 'rw'}}
             )
             logging.info(f"Container created: {container.id} for room {room_key} on port {port}")
-            # Wait for container to initialize
             time.sleep(5)
-            # Call create_room on the container
             for attempt in range(3):
                 try:
                     server = xmlrpc.client.ServerProxy(f"http://localhost:{port}/")

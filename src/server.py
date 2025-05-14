@@ -95,7 +95,7 @@ def generate_room_key():
 
 
 # Global room registry
-rooms = {}  # {room_key: GameState}
+rooms = {}
 
 
 def create_room(player_id, player_name):
